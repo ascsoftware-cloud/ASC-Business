@@ -1,5 +1,7 @@
-import { get, mutate, newId } from './store.ts'
-import type { Business, Field } from './store.ts'
+import { mutate, newId, notify } from './store.ts'
+import type { Business, Field, State } from './store.ts'
+import { cloudEnabled, submitAnswers, subscribeDevice, unsubscribeDevice } from './cloud.ts'
+import { retry, viewApp } from './published.ts'
 import { go } from './router.ts'
 import { formData, register, toast } from './ui.ts'
 import { esc, fmtDate, fmtDay, isHex, paragraphs, readableOn, safeUrl } from './util.ts'
@@ -7,6 +9,8 @@ import { esc, fmtDate, fmtDay, isHex, paragraphs, readableOn, safeUrl } from './
 interface Viewer {
   subscribed: boolean
   seen: string[]
+  /** Stands in for this phone when notifications are on. Never leaves the device except as a random id. */
+  device: string
 }
 
 const viewerKey = (slug: string) => `asc-business:viewer:${slug}`
@@ -14,9 +18,9 @@ const viewerKey = (slug: string) => `asc-business:viewer:${slug}`
 function loadViewer(slug: string): Viewer {
   try {
     const v = JSON.parse(localStorage.getItem(viewerKey(slug)) ?? '{}') as Partial<Viewer>
-    return { subscribed: !!v.subscribed, seen: Array.isArray(v.seen) ? v.seen : [] }
+    return { subscribed: !!v.subscribed, seen: Array.isArray(v.seen) ? v.seen : [], device: v.device || newId() }
   } catch {
-    return { subscribed: false, seen: [] }
+    return { subscribed: false, seen: [], device: newId() }
   }
 }
 
@@ -38,11 +42,20 @@ const tabs = [
 
 export const brandColor = (b: Business): string => (isHex(b.color) ? b.color : '#0a6650')
 
+// The app being shown: the owner's own data locally, the published app from the cloud otherwise.
+let cur: State = { business: null, posts: [], events: [], notices: [], forms: [], submissions: [], links: [], subscribers: [] }
+
+/** The business behind an app address once it has loaded, for the page title and colour. */
+export function appBusiness(slug: string): Business | null {
+  const v = viewApp(slug)
+  return v.kind === 'ready' ? v.state.business : null
+}
+
 // Notifications the viewer has already been told about in this session.
 let known: Set<string> | null = null
 
 function announceNew(slug: string, viewer: Viewer): void {
-  const sent = get().notices.filter((n) => n.status === 'sent')
+  const sent = cur.notices.filter((n) => n.status === 'sent')
   if (known === null) {
     known = new Set(sent.map((n) => n.id))
     return
@@ -54,7 +67,7 @@ function announceNew(slug: string, viewer: Viewer): void {
     toast(`New notification: ${n.title}`)
     try {
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification(get().business?.name ?? slug, { body: `${n.title}. ${n.body}` })
+        new Notification(cur.business?.name ?? slug, { body: `${n.title}. ${n.body}` })
       }
     } catch {
       // Some browsers only allow notifications from a service worker.
@@ -62,17 +75,35 @@ function announceNew(slug: string, viewer: Viewer): void {
   }
 }
 
-export function renderApp(sub: string[], params: URLSearchParams): string {
-  const s = get()
-  const biz = s.business
-
-  if (!biz || biz.slug !== sub[0]) {
+function unavailable(slug: string, kind: 'loading' | 'missing' | 'error'): string {
+  if (kind === 'loading') {
+    return `<main class="capp-missing" id="main" tabindex="-1" role="status"><p>Loading…</p></main>`
+  }
+  if (kind === 'error') {
     return `<main class="capp-missing" id="main" tabindex="-1">
-      <h1>This App Isn’t Available Here</h1>
-      <p>Apps are stored in the browser they were built in for now, so this link only works on the device that created it.</p>
-      <p><a class="btn" href="#/">Go to the Home Page</a></p>
+      <h1>Can’t Reach This App</h1>
+      <p>Check your connection. We will keep trying.</p>
+      <p><button class="btn" type="button" data-action="retryApp" data-slug="${esc(slug)}">Try Again</button></p>
     </main>`
   }
+  return `<main class="capp-missing" id="main" tabindex="-1">
+    <h1>This App Isn’t Available</h1>
+    <p>${
+      cloudEnabled
+        ? 'We could not find an app at this address. Check the link with the business that sent it.'
+        : 'Apps are stored in the browser they were built in for now, so this link only works on the device that created it.'
+    }</p>
+    <p><a class="btn" href="#/">Go to the Home Page</a></p>
+  </main>`
+}
+
+export function renderApp(sub: string[], params: URLSearchParams): string {
+  const view = viewApp(sub[0] ?? '')
+  if (view.kind !== 'ready') return unavailable(sub[0] ?? '', view.kind)
+  const s = view.state
+  const biz = s.business
+  if (!biz) return unavailable(sub[0] ?? '', 'missing')
+  cur = s
 
   const viewer = loadViewer(biz.slug)
   announceNew(biz.slug, viewer)
@@ -149,12 +180,12 @@ function postCard(p: { title: string; body: string; createdAt: string; pinned: b
 }
 
 const sortedPosts = () =>
-  [...get().posts].sort(
+  [...cur.posts].sort(
     (a, b) => Number(b.pinned) - Number(a.pinned) || +new Date(b.createdAt) - +new Date(a.createdAt),
   )
 
 const upcoming = () =>
-  [...get().events]
+  [...cur.events]
     .filter((e) => +new Date(e.date) >= Date.now() - 3_600_000)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date))
 
@@ -230,7 +261,7 @@ function viewAlerts(
 }
 
 function viewContact(biz: Business, formId: string | null): string {
-  const s = get()
+  const s = cur
   const form = formId ? s.forms.find((f) => f.id === formId) : undefined
   if (form) return viewForm(biz, form.id, form.name, form.fields)
 
@@ -299,9 +330,15 @@ register({
   subscribe: async (el) => {
     const slug = el.dataset.slug!
     const v = loadViewer(slug)
+    try {
+      if (cloudEnabled) await subscribeDevice(slug, v.device)
+      else mutate((s) => s.subscribers.push({ id: newId(), at: new Date().toISOString() }))
+    } catch {
+      toast('Could not turn notifications on. Please try again.', 'error')
+      return
+    }
     v.subscribed = true
     saveViewer(slug, v)
-    mutate((s) => s.subscribers.push({ id: newId(), at: new Date().toISOString() }))
     try {
       if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
         await Notification.requestPermission()
@@ -310,38 +347,57 @@ register({
       // Ignore: in-app alerts still work without browser permission.
     }
     toast('Notifications are on.')
+    notify()
   },
 
-  unsubscribe: (el) => {
+  unsubscribe: async (el) => {
     const slug = el.dataset.slug!
     const v = loadViewer(slug)
+    try {
+      if (cloudEnabled) await unsubscribeDevice(slug, v.device)
+      else mutate((s) => s.subscribers.pop())
+    } catch {
+      toast('Could not turn notifications off. Please try again.', 'error')
+      return
+    }
     v.subscribed = false
     saveViewer(slug, v)
-    mutate((s) => s.subscribers.pop())
     toast('Notifications are off.')
+    notify()
   },
 
-  submitForm: (form) => {
+  retryApp: (el) => void retry(el.dataset.slug!),
+
+  submitForm: async (form) => {
     const f = form as HTMLFormElement
-    const s = get()
-    const def = s.forms.find((x) => x.id === f.dataset.form)
-    if (!def) return
+    const def = cur.forms.find((x) => x.id === f.dataset.form)
+    if (!def || !cur.business) return
     const d = formData(f)
     const values = def.fields.map((fld) => ({
       label: fld.label,
       value: String(d.get(`q-${fld.id}`) ?? '').trim(),
     }))
-    mutate((st) =>
-      st.submissions.push({
-        id: newId(),
-        formId: def.id,
-        formName: def.name,
-        at: new Date().toISOString(),
-        values,
-        read: false,
-      }),
-    )
+    const slug = cur.business.slug
+    if (cloudEnabled) {
+      try {
+        await submitAnswers(slug, def.id, values)
+      } catch {
+        toast('We could not send that. Please check your connection and try again.', 'error')
+        return
+      }
+    } else {
+      mutate((st) =>
+        st.submissions.push({
+          id: newId(),
+          formId: def.id,
+          formName: def.name,
+          at: new Date().toISOString(),
+          values,
+          read: false,
+        }),
+      )
+    }
     toast('Thank you. We have your message.')
-    go(`/a/${s.business!.slug}/contact`)
+    go(`/a/${slug}/contact`)
   },
 })

@@ -6,6 +6,7 @@ import { formData, register, str, toast } from './ui.ts'
 import { esc, fmtDate, isHex, plural } from './util.ts'
 import { pageEvents, pageForms, pageLinks, pageNews, pageNotices } from './manage.ts'
 import { site } from './content.ts'
+import { cloudEnabled } from './cloud.ts'
 
 export const appUrl = (slug: string): string => `${location.origin}${location.pathname}#/a/${slug}`
 
@@ -75,6 +76,7 @@ export function renderDashboard(sub: string[], params: URLSearchParams): string 
         <ul class="side-foot">
           <li><a href="#/a/${esc(biz.slug)}" target="_blank" rel="noopener">Open Your App<span class="sr-only"> (opens in a new tab)</span></a></li>
           <li><a href="#/">Back to Site</a></li>
+          ${cloudEnabled ? '<li><button class="side-btn" type="button" data-action="signOut">Sign Out</button></li>' : ''}
         </ul>
       </aside>
       <main class="dash-main" id="main" tabindex="-1">${body}</main>
@@ -192,10 +194,18 @@ function pageSettings(): string {
 
     <section class="panel stack danger-zone" aria-labelledby="danger-h">
       <h2 id="danger-h" class="h-small">Start Over</h2>
-      <p>Delete this business and all its posts, events, forms and enquiries from this browser.</p>
+      <p>${
+        cloudEnabled
+          ? 'Delete this business and all its posts, events, forms and enquiries. Customers will no longer be able to open your app.'
+          : 'Delete this business and all its posts, events, forms and enquiries from this browser.'
+      }</p>
       <div><button class="btn btn-danger" type="button" data-action="resetAll">Delete Everything</button></div>
     </section>
-    <p class="muted small">Data is saved in this browser for now. ${esc(site.brand)} accounts and cloud sync come with the hosted version.</p>`
+    <p class="muted small">${
+      cloudEnabled
+        ? `Saved to your ${esc(site.brand)} account. Changes go live for customers within seconds.`
+        : `Data is saved in this browser for now. Add Supabase settings to keep it in an account (see the README).`
+    }</p>`
 }
 
 register({
@@ -232,9 +242,9 @@ register({
     toast('Settings saved.')
   },
 
-  resetAll: () => {
-    if (!window.confirm('Delete your business and all its content from this browser? This cannot be undone.')) return
-    reset()
-    go('/start')
+  resetAll: async () => {
+    const where = cloudEnabled ? 'and stop customers reaching your app' : 'from this browser'
+    if (!window.confirm(`Delete your business and all its content ${where}? This cannot be undone.`)) return
+    if (await reset()) go('/start')
   },
 })

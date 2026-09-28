@@ -1,4 +1,4 @@
-import { mutate } from './store.ts'
+import { flush, mutate } from './store.ts'
 import type { Industry } from './store.ts'
 import { go } from './router.ts'
 import { industries, industryList, sampleContent } from './templates.ts'
@@ -39,7 +39,7 @@ export function renderStart(): string {
 }
 
 register({
-  createBusiness: (form) => {
+  createBusiness: async (form) => {
     const d = formData(form as HTMLFormElement)
     const industry = str(d, 'industry') as Industry
     const name = str(d, 'name')
@@ -59,6 +59,9 @@ register({
       }
       Object.assign(s, sampleContent(industry))
     })
+    // In cloud mode this is the moment the app is created. The dashboard is already open behind the
+    // redraw above; wait so its link shows the final address. A failure is reported and retried by the store.
+    await flush()
     go('/dashboard?welcome=1')
   },
 })

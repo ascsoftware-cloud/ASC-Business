@@ -1,3 +1,4 @@
+import { cloudEnabled } from './cloud.ts'
 import { audience, closing, faq, hero, how, included, local, nav, site, why } from './content.ts'
 
 const mailto = (subject: string) => `mailto:${site.email}?subject=${encodeURIComponent(subject)}`
@@ -16,7 +17,7 @@ export function renderLanding(): string {
         ${nav.map((n) => `<li><a href="${n.href}">${n.label}</a></li>`).join('')}
       </ul>
     </nav>
-    <a class="btn btn-quiet" href="#/dashboard">Open Dashboard</a>
+    <a class="btn btn-quiet" href="#/dashboard">${cloudEnabled ? 'Sign In' : 'Open Dashboard'}</a>
   </div>
 </header>
 
