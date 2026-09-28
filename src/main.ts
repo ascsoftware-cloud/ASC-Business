@@ -1,150 +1,85 @@
 import '@fontsource-variable/figtree'
 import './style.css'
-import {
-  audience,
-  closing,
-  faq,
-  hero,
-  how,
-  included,
-  legal,
-  local,
-  nav,
-  proof,
-  site,
-  why,
-} from './content.ts'
+import './app.css'
+import { get, releaseScheduled, subscribe } from './store.ts'
+import { current, go, isAnchorHash } from './router.ts'
+import { bind } from './ui.ts'
+import { renderLanding } from './landing.ts'
+import { renderStart } from './start.ts'
+import { renderDashboard } from './dashboard.ts'
+import { brandColor, renderApp } from './app.ts'
 
-const mailto = (subject: string) =>
-  `mailto:${site.email}?subject=${encodeURIComponent(subject)}`
+const root = document.querySelector<HTMLDivElement>('#app')!
+const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+const SITE_TITLE = document.title
+const SITE_COLOR = themeMeta?.content ?? '#f7f8f6'
 
-const brand = `<span translate="no">${site.brand}</span>`
+bind(root)
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-<a class="skip" href="#main">Skip to Main Content</a>
+let lastKey = ''
 
-<header class="masthead">
-  <div class="wrap bar">
-    <a class="brand" href="#top" aria-label="${site.brand.replace(' ', ' ')}, back to top">${brand}</a>
-    <nav aria-label="Main">
-      <ul class="nav-links">
-        ${nav.map((n) => `<li><a href="${n.href}">${n.label}</a></li>`).join('')}
-      </ul>
-    </nav>
-    <a class="btn btn-quiet" href="${mailto('Enquiry: business app')}">Contact</a>
-  </div>
-</header>
+function render(): void {
+  // Plain #anchors are in-page jumps on the landing page, not routes.
+  if (isAnchorHash()) return
 
-<main id="main">
-  <section class="hero wrap" id="top" aria-labelledby="hero-h">
-    <p class="eyebrow">${hero.eyebrow}</p>
-    <h1 id="hero-h">${hero.title}</h1>
-    <p class="lead">${hero.lead}</p>
-    <div class="actions">
-      <a class="btn" href="${mailto(hero.ctaSubject)}">${hero.cta}</a>
-      <a class="text-link" href="${hero.secondary.href}">${hero.secondary.label}</a>
-    </div>
-  </section>
+  const { path, params } = current()
+  const [section, ...sub] = path
+  const biz = get().business
 
-  <section class="proof" aria-labelledby="proof-h">
-    <div class="wrap proof-inner">
-      <div>
-        <h2 id="proof-h" class="h-small">${proof.heading}</h2>
-        <p>${proof.body}</p>
-      </div>
-      <ul class="store-links">
-        ${proof.links
-          .map(
-            (l) =>
-              `<li><a class="btn btn-outline" href="${l.href}" target="_blank" rel="noopener">${l.label}<span class="sr-only"> (opens in a new tab)</span></a></li>`,
-          )
-          .join('')}
-      </ul>
-    </div>
-  </section>
+  let html: string
+  let view: 'site' | 'start' | 'dash' | 'app'
+  let title = SITE_TITLE
+  let color = SITE_COLOR
 
-  <section class="section wrap" id="why" aria-labelledby="why-h">
-    <h2 id="why-h">${why.title}</h2>
-    <div class="why-grid">
-      ${why.points
-        .map(
-          (p, i) => `
-        <div class="why-item ${i === 0 ? 'why-lead' : ''}">
-          <h3>${p.title}</h3>
-          <p>${p.body}</p>
-        </div>`,
-        )
-        .join('')}
-    </div>
-  </section>
+  if (!section) {
+    html = renderLanding()
+    view = 'site'
+  } else if (section === 'start') {
+    if (biz) return go('/dashboard')
+    html = renderStart()
+    view = 'start'
+    title = `Set Up Your App | ${SITE_TITLE}`
+  } else if (section === 'dashboard') {
+    if (!biz) return go('/start')
+    html = renderDashboard(sub, params)
+    view = 'dash'
+    title = `Dashboard | ${biz.name}`
+  } else if (section === 'a') {
+    html = renderApp(sub, params)
+    view = 'app'
+    if (biz && biz.slug === sub[0]) {
+      title = biz.name
+      color = brandColor(biz)
+    }
+  } else {
+    return go('/')
+  }
 
-  <section class="section section-tint" id="included" aria-labelledby="inc-h">
-    <div class="wrap included">
-      <div class="included-head">
-        <h2 id="inc-h">${included.title}</h2>
-        <p>${included.intro}</p>
-      </div>
-      <dl class="term-list">
-        ${included.items
-          .map((i) => `<div><dt>${i.term}</dt><dd>${i.detail}</dd></div>`)
-          .join('')}
-      </dl>
-    </div>
-  </section>
+  document.body.dataset.view = view
+  document.title = title
+  if (themeMeta) themeMeta.content = color
+  root.innerHTML = html
 
-  <section class="section wrap" id="who" aria-labelledby="who-h">
-    <h2 id="who-h">${audience.title}</h2>
-    <ul class="who-grid">
-      ${audience.items
-        .map((a) => `<li><h3>${a.name}</h3><p>${a.body}</p></li>`)
-        .join('')}
-    </ul>
-  </section>
+  // New page: start at the top and move focus to it. Same page redrawn: leave the reader where they are.
+  const key = location.hash
+  if (key !== lastKey) {
+    lastKey = key
+    window.scrollTo(0, 0)
+    if (view !== 'site') root.querySelector<HTMLElement>('#main, #start-main')?.focus({ preventScroll: true })
+  }
+}
 
-  <section class="section section-tint" id="how" aria-labelledby="how-h">
-    <div class="wrap">
-      <h2 id="how-h">${how.title}</h2>
-      <ol class="how-list">
-        ${how.steps.map((s) => `<li><h3>${s.verb}</h3><p>${s.body}</p></li>`).join('')}
-      </ol>
-    </div>
-  </section>
+// Data changes redraw the page, except where a redraw would destroy something in progress:
+// the preview iframe (it would jump back to Home) or text the owner is still typing.
+subscribe(() => {
+  if (current().path.join('/') === 'dashboard/preview') return
+  const active = document.activeElement
+  if (active && root.contains(active) && active.matches('input:not([readonly]), textarea, select')) return
+  render()
+})
+window.addEventListener('hashchange', render)
 
-  <section class="section wrap" id="local" aria-labelledby="local-h">
-    <div class="included">
-      <div class="included-head">
-        <h2 id="local-h">${local.title}</h2>
-      </div>
-      <dl class="term-list">
-        ${local.points
-          .map((p) => `<div><dt>${p.term}</dt><dd>${p.detail}</dd></div>`)
-          .join('')}
-      </dl>
-    </div>
-  </section>
-
-  <section class="section section-tint" id="faq" aria-labelledby="faq-h">
-    <div class="wrap faq">
-      <h2 id="faq-h">${faq.title}</h2>
-      <div class="faq-list">
-        ${faq.items
-          .map((f) => `<details><summary>${f.q}</summary><p>${f.a}</p></details>`)
-          .join('')}
-      </div>
-    </div>
-  </section>
-
-  <section class="closing wrap" aria-labelledby="close-h">
-    <h2 id="close-h">${closing.title}</h2>
-    <p>${closing.body}</p>
-    <a class="btn" href="${mailto(closing.ctaSubject)}">${closing.cta}</a>
-  </section>
-</main>
-
-<footer class="site-foot">
-  <div class="wrap foot-inner">
-    <span>&copy; ${site.year} ${brand}</span>
-    <span>${legal}</span>
-  </div>
-</footer>
-`
+// Scheduled notifications go out when their time arrives.
+setInterval(releaseScheduled, 30_000)
+releaseScheduled()
+render()

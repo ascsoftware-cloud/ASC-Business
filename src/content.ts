@@ -1,4 +1,4 @@
-// All page copy lives here so wording can change without touching markup.
+// All marketing copy lives here so wording can change without touching markup.
 // Items marked CONFIRM are commitments or facts that only ASC Software can verify.
 
 export const site = {
@@ -19,23 +19,9 @@ export const nav = [
 export const hero = {
   eyebrow: 'Mobile Apps for South African Businesses',
   title: 'Put Your Business on Your Customers’ Home Screen',
-  lead: 'A branded iOS and Android app, built on Subsplash and run for you by ASC Software.',
-  cta: 'Book a Demo',
-  ctaSubject: 'Demo request: business app',
+  lead: 'Build a branded app for your business in minutes and share it with a link. No app store needed.',
+  cta: 'Build Your App',
   secondary: { label: 'See What’s Included', href: '#included' },
-}
-
-// CONFIRM: ASC Software's role on the Collage app before publishing this strip.
-export const proof = {
-  heading: 'See a live Subsplash app from an ASC Software client',
-  body: 'The Collage app is in both stores. Install it and look around before you talk to us.',
-  links: [
-    { label: 'App Store', href: 'https://apps.apple.com/app/id6751739190' },
-    {
-      label: 'Google Play',
-      href: 'https://play.google.com/store/apps/details?id=com.subsplashconsulting.s_PFFHQT',
-    },
-  ],
 }
 
 export const why = {
@@ -43,11 +29,11 @@ export const why = {
   points: [
     {
       title: 'You Own the Channel',
-      body: 'Your followers on Facebook and Instagram belong to those platforms, and your reach shifts every time their rules change. Customers who install your app are yours to message directly.',
+      body: 'Your followers on Facebook and Instagram belong to those platforms, and your reach shifts every time their rules change. Customers who add your app are yours to message directly.',
     },
     {
       title: 'Notifications Get Seen',
-      body: 'A push notification lands on the lock screen. No algorithm decides whether your regulars see your Friday special.',
+      body: 'A notification lands where your customers already look. No algorithm decides whether your regulars see your Friday special.',
     },
     {
       title: 'One Place for Everything',
@@ -62,16 +48,15 @@ export const included = {
   items: [
     {
       term: 'Your Branding',
-      detail:
-        'Your name, icon, colours and launch screen, published to the Apple App Store and Google Play.',
+      detail: 'Your name, colour and tagline on every screen. Customers add it to their home screen from a link.',
     },
     {
-      term: 'Push Notifications',
-      detail: 'Send offers, reminders and announcements to everyone who has your app.',
+      term: 'Notifications',
+      detail: 'Send offers, reminders and announcements now, or schedule them for later.',
     },
     {
       term: 'News & Promotions',
-      detail: 'Post updates from a simple web dashboard. No developer needed.',
+      detail: 'Post updates from a simple dashboard. No developer needed.',
     },
     {
       term: 'Events & Calendar',
@@ -79,12 +64,11 @@ export const included = {
     },
     {
       term: 'Forms & Enquiries',
-      detail: 'Quote requests, bookings and feedback arrive in your inbox.',
+      detail: 'Build your own forms for bookings, quotes and feedback. Answers land in your inbox.',
     },
     {
       term: 'Links to Your Tools',
-      detail:
-        'Send customers to your online shop, booking system or WhatsApp chat from inside the app.',
+      detail: 'Send customers to your online shop, booking system or WhatsApp chat from inside the app.',
     },
   ],
 }
@@ -123,20 +107,20 @@ export const how = {
   title: 'How It Works',
   steps: [
     {
-      verb: 'Brief',
-      body: 'We talk through your business, your customers and what the app has to do.',
+      verb: 'Set Up',
+      body: 'Pick your type of business and brand colour. We add sample news, an event and a form you can edit.',
     },
     {
-      verb: 'Brand',
-      body: 'We set up your icon, colours, screens and starter content. You approve it before anything goes near a store.',
+      verb: 'Customise',
+      body: 'Change the wording, add your contact details and links, and check the live preview as you go.',
     },
     {
-      verb: 'Publish',
-      body: 'We submit to Apple and Google and handle their questions. Both stores review every app, so the final date is theirs to set.',
+      verb: 'Share',
+      body: 'Send customers your app link, or put it on receipts and posters. They add it to their home screen in two taps.',
     },
     {
       verb: 'Run',
-      body: 'You post updates yourself. We are on hand when something breaks or you need a second pair of eyes.',
+      body: 'Post news, events and notifications from the dashboard, and read enquiries as they arrive.',
     },
   ],
 }
@@ -147,7 +131,7 @@ export const local = {
     {
       term: 'POPIA',
       detail:
-        'Customers opt in to notifications, and we show you where your privacy policy goes, which both app stores require. You remain the responsible party under POPIA.',
+        'Customers opt in to notifications, and you decide what to collect in your forms. You remain the responsible party under POPIA.',
     },
     {
       term: 'Rand Pricing',
@@ -159,9 +143,8 @@ export const local = {
       detail: 'Post in English, Afrikaans or both, in the same app.',
     },
     {
-      term: 'iPhone & Android',
-      detail:
-        'Android phones are everywhere in South Africa, so every app ships for Android as well as iPhone.',
+      term: 'Any Phone',
+      detail: 'The app runs in the phone’s browser, so Android and iPhone customers get the same experience.',
     },
     {
       term: 'Local Support',
@@ -177,32 +160,30 @@ export const faq = {
     {
       q: 'How Much Does It Cost?',
       // CONFIRM: pricing model
-      a: 'It depends on the plan and how much setup you need. We quote in rand after a short call, so you know the once-off and monthly amounts before you commit.',
+      a: 'It depends on the plan. We quote in rand, so you know the amount before you commit.',
     },
     {
-      q: 'How Long Until It Is Live?',
-      a: 'Once you approve the design, we submit to Apple and Google. Their reviews set the final date, so we give you a realistic window at the start.',
+      q: 'Do Customers Need an App Store?',
+      a: 'No. They open your link in their phone’s browser and add it to the home screen. There is nothing to download and nothing to wait for from Apple or Google.',
+    },
+    {
+      q: 'How Long Does Setup Take?',
+      a: 'Minutes. We fill in sample content for your type of business, and you change it as you go.',
     },
     {
       q: 'Can I Update It Myself?',
-      a: 'Yes. News, promotions, events and push notifications are posted from a web dashboard. No developer needed.',
+      a: 'Yes. News, promotions, events, forms and notifications are all managed from the dashboard. No developer needed.',
     },
     {
-      q: 'Will Customers Actually Download It?',
-      a: 'They will if you give them a reason. We help you plan the launch: a QR code at the till, signage in the shop, and a first offer that is only in the app.',
-    },
-    {
-      q: 'Is Subsplash a South African Company?',
-      a: 'No. Subsplash is a US-based app platform used by organisations around the world. ASC Software is the South African team that sets it up and supports you locally.',
+      q: 'Will Customers Actually Use It?',
+      a: 'They will if you give them a reason. Put your link on the till slip and a poster by the door, and make the first offer one that only appears in the app.',
     },
   ],
 }
 
 export const closing = {
-  title: 'Ready to See Your Business in an App?',
-  body: 'Tell us what you sell and who your regulars are. We will show you what your app could look like.',
-  cta: 'Request a Quote',
-  ctaSubject: 'Quote request: business app',
+  title: 'Not Sure Where to Start?',
+  body: 'Tell us what you sell and who your regulars are. We will point you to the right setup.',
+  cta: 'Talk to Us',
+  ctaSubject: 'Question about the business app',
 }
-
-export const legal = 'Subsplash is a trademark of Subsplash Inc.'
