@@ -1,60 +1,150 @@
+import '@fontsource-variable/figtree'
 import './style.css'
-import heroImg from './assets/hero.png'
-import typescriptLogo from './assets/typescript.svg'
-import viteLogo from './assets/vite.svg'
-import { setupCounter } from './counter.ts'
+import {
+  audience,
+  closing,
+  faq,
+  hero,
+  how,
+  included,
+  legal,
+  local,
+  nav,
+  proof,
+  site,
+  why,
+} from './content.ts'
+
+const mailto = (subject: string) =>
+  `mailto:${site.email}?subject=${encodeURIComponent(subject)}`
+
+const brand = `<span translate="no">${site.brand}</span>`
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${typescriptLogo}" class="framework" alt="TypeScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.ts</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+<a class="skip" href="#main">Skip to Main Content</a>
 
-<div class="ticks"></div>
+<header class="masthead">
+  <div class="wrap bar">
+    <a class="brand" href="#top" aria-label="${site.brand.replace(' ', ' ')}, back to top">${brand}</a>
+    <nav aria-label="Main">
+      <ul class="nav-links">
+        ${nav.map((n) => `<li><a href="${n.href}">${n.label}</a></li>`).join('')}
+      </ul>
+    </nav>
+    <a class="btn btn-quiet" href="${mailto('Enquiry: business app')}">Contact</a>
+  </div>
+</header>
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://www.typescriptlang.org" target="_blank">
-          <img class="button-icon" src="${typescriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
+<main id="main">
+  <section class="hero wrap" id="top" aria-labelledby="hero-h">
+    <p class="eyebrow">${hero.eyebrow}</p>
+    <h1 id="hero-h">${hero.title}</h1>
+    <p class="lead">${hero.lead}</p>
+    <div class="actions">
+      <a class="btn" href="${mailto(hero.ctaSubject)}">${hero.cta}</a>
+      <a class="text-link" href="${hero.secondary.href}">${hero.secondary.label}</a>
+    </div>
+  </section>
+
+  <section class="proof" aria-labelledby="proof-h">
+    <div class="wrap proof-inner">
+      <div>
+        <h2 id="proof-h" class="h-small">${proof.heading}</h2>
+        <p>${proof.body}</p>
+      </div>
+      <ul class="store-links">
+        ${proof.links
+          .map(
+            (l) =>
+              `<li><a class="btn btn-outline" href="${l.href}" target="_blank" rel="noopener">${l.label}<span class="sr-only"> (opens in a new tab)</span></a></li>`,
+          )
+          .join('')}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section wrap" id="why" aria-labelledby="why-h">
+    <h2 id="why-h">${why.title}</h2>
+    <div class="why-grid">
+      ${why.points
+        .map(
+          (p, i) => `
+        <div class="why-item ${i === 0 ? 'why-lead' : ''}">
+          <h3>${p.title}</h3>
+          <p>${p.body}</p>
+        </div>`,
+        )
+        .join('')}
+    </div>
+  </section>
+
+  <section class="section section-tint" id="included" aria-labelledby="inc-h">
+    <div class="wrap included">
+      <div class="included-head">
+        <h2 id="inc-h">${included.title}</h2>
+        <p>${included.intro}</p>
+      </div>
+      <dl class="term-list">
+        ${included.items
+          .map((i) => `<div><dt>${i.term}</dt><dd>${i.detail}</dd></div>`)
+          .join('')}
+      </dl>
+    </div>
+  </section>
+
+  <section class="section wrap" id="who" aria-labelledby="who-h">
+    <h2 id="who-h">${audience.title}</h2>
+    <ul class="who-grid">
+      ${audience.items
+        .map((a) => `<li><h3>${a.name}</h3><p>${a.body}</p></li>`)
+        .join('')}
     </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+  </section>
 
-<div class="ticks"></div>
-<section id="spacer"></section>
+  <section class="section section-tint" id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <h2 id="how-h">${how.title}</h2>
+      <ol class="how-list">
+        ${how.steps.map((s) => `<li><h3>${s.verb}</h3><p>${s.body}</p></li>`).join('')}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section wrap" id="local" aria-labelledby="local-h">
+    <div class="included">
+      <div class="included-head">
+        <h2 id="local-h">${local.title}</h2>
+      </div>
+      <dl class="term-list">
+        ${local.points
+          .map((p) => `<div><dt>${p.term}</dt><dd>${p.detail}</dd></div>`)
+          .join('')}
+      </dl>
+    </div>
+  </section>
+
+  <section class="section section-tint" id="faq" aria-labelledby="faq-h">
+    <div class="wrap faq">
+      <h2 id="faq-h">${faq.title}</h2>
+      <div class="faq-list">
+        ${faq.items
+          .map((f) => `<details><summary>${f.q}</summary><p>${f.a}</p></details>`)
+          .join('')}
+      </div>
+    </div>
+  </section>
+
+  <section class="closing wrap" aria-labelledby="close-h">
+    <h2 id="close-h">${closing.title}</h2>
+    <p>${closing.body}</p>
+    <a class="btn" href="${mailto(closing.ctaSubject)}">${closing.cta}</a>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap foot-inner">
+    <span>&copy; ${site.year} ${brand}</span>
+    <span>${legal}</span>
+  </div>
+</footer>
 `
-
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
